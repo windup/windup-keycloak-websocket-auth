@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2015-2016 Red Hat, Inc. and/or its affiliates
+    and other contributors as indicated by the @author tags.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <name>Keycloak WebSocket - Parent</name>
+  <groupId>org.jboss.windup.web</groupId>
+  <artifactId>keycloak-websocket-parent</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>common</module>
+    <module>websocket-api</module>
+  </modules>
+
+  <description>
+    Parent module, where the versions are defined.
+  </description>
+
+  <properties>
+    <version.com.icegreen.greenmail>1.4.1</version.com.icegreen.greenmail>
+
+    <version.org.hawkular.commons>0.6.1.Final</version.org.hawkular.commons>
+    <version.org.keycloak.secretstore>1.0.15.Final</version.org.keycloak.secretstore>
+
+    <!-- Accounts should be the only place where the KeyCloak version is defined -->
+    <version.org.keycloak>1.9.1.Final</version.org.keycloak>
+
+    <version.org.wildfly.arquillian>2.0.0.Alpha1</version.org.wildfly.arquillian>
+    <version.org.wildfly.bom>10.0.1.Final</version.org.wildfly.bom>
+    <version.org.wildfly>10.0.0.Final</version.org.wildfly>
+    <version.org.codehaus.groovy>2.4.12</version.org.codehaus.groovy>
+
+    <failOnMissingWebXml>false</failOnMissingWebXml>
+    <jboss.releases.repo.url>
+      https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/
+    </jboss.releases.repo.url>
+    <jboss.snapshots.repo.url>
+      https://repository.jboss.org/nexus/content/repositories/snapshots/
+    </jboss.snapshots.repo.url>
+
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.wildfly.bom</groupId>
+        <artifactId>wildfly-javaee7</artifactId>
+        <version>${version.org.wildfly.bom}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.wildfly</groupId>
+        <artifactId>wildfly-spec-api</artifactId>
+        <version>${version.org.wildfly}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-core</artifactId>
+        <version>${version.org.keycloak}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+        <filtering>true</filtering>
+      </testResource>
+    </testResources>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>set-custom-property</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scripts>
+            <script><![CDATA[
+              import java.util.UUID
+              def uuidBackend = System.getProperty("uuid.hawkular.accounts.backend")
+              if (uuidBackend == null) {
+                  uuidBackend = UUID.randomUUID().toString()
+                  System.setProperty("uuid.hawkular.accounts.backend", uuidBackend)
+              }
+              def uuidUi = System.getProperty("uuid.hawkular.ui")
+              if (uuidUi == null) {
+                  uuidUi = UUID.randomUUID().toString()
+                  System.setProperty("uuid.hawkular.ui", uuidUi)
+              }
+              print "Set uuid.hawkular.accounts.backend = " + uuidBackend
+              project.properties.setProperty('uuid.hawkular.accounts.backend', uuidBackend)
+              project.properties.setProperty('uuid.hawkular.ui', uuidUi)
+              project.properties.setProperty('uuid.hawkular.secretstore', uuidUi)
+            ]]></script>
+          </scripts>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>${version.org.codehaus.groovy}</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <webResources>
+            <resource>
+              <filtering>true</filtering>
+              <directory>src/main/webapp</directory>
+              <includes>
+                <include>**/web.xml</include>
+              </includes>
+            </resource>
+          </webResources>
+          <warSourceDirectory>src/main/webapp</warSourceDirectory>
+          <webXml>src/main/webapp/WEB-INF/web.xml</webXml>
+          <failOnMissingWebXml>${failOnMissingWebXml}</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+
+    </plugins>
+  </build>
+</project>
